@@ -1,0 +1,6 @@
+﻿skenario,spearman_vs_dasar,irisan_top_5,dari_total
+dasar (sama rata),1.0,30,30
+volatilitas 2x,0.91,22,30
+premi harga 2x,0.86,23,30
+outlier 2x,0.98,29,30
+tanpa outlier,0.94,28,30

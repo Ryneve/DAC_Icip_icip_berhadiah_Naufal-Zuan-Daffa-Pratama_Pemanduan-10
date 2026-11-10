@@ -1,0 +1,25 @@
+ASUMSI & KETERBATASAN
+1. Satuan harga_median belum diverifikasi panitia. Level harga tidak dibandingkan antar-komoditas; perbandingan memakai indeks, % perubahan, rasio, dan CV.
+2. Titik/koma tiga digit pada kolom rupiah dianggap pemisah ribuan; format campuran (Rp, %, koma desimal) diseragamkan menjadi numerik.
+3. Baris dengan cakupan < 80% (atau kosong) dikeluarkan dari EDA (25 baris). Ambang ini pilihan analis; nilai cakupan terlihat terpisah antara 77.4% dan 90.0%.
+4. Harga nasional bulanan = median dari median provinsi (proksi, tanpa bobot populasi). Harga kosong (5 baris) tidak diimputasi.
+5. Outlier (23 baris di luar 0.55x-1.8x median seri) ditandai, tidak dibuang, karena bisa berupa lonjakan nyata. Jumlah baris yang ditandai sensitif terhadap ambang (6 sampai 152 baris pada ambang/metode yang diuji); karena baris tidak dibuang, hanya komponen frekuensi outlier pada indeks prioritas yang terpengaruh.
+6. Data mencakup 34 provinsi, 21 bulan (2023-01 sampai 2024-09).
+7. Kurs dan Google Trends dianalisis pada tingkat nasional bulanan, bukan per baris. Google Trends adalah indeks relatif, bukan jumlah pencarian, dan tidak dibandingkan antar-kata kunci.
+8. Akses internet 2023 diperlakukan statis (bukan pengukuran ulang tiap bulan 2024).
+9. QRIS sintetis dan hanya punya dua titik tahunan: tidak dijumlahkan, tidak dipakai untuk tren atau klaim kausal; angka 2024 dibaca retrospektif.
+10. Semua hubungan antarvariabel bersifat deskriptif, bukan sebab-akibat; jumlah bulan kecil (sekitar 20 pasangan) membuat korelasi tidak stabil.
+11. Hanya data panitia yang dipakai. Penyebab pola (lonjakan harga, selisih antarprovinsi) tidak dianalisis dan hanya dilaporkan secara deskriptif.
+12. Bobot sama rata pada indeks prioritas adalah pilihan analis; kestabilan peringkat diuji dengan variasi bobot (lihat tabel sensitivitas).
+
+LANDASAN REKOMENDASI (semua bersifat deskriptif)
+1. Volatilitas: Cabai Rawit Merah (22.9%) dan Bawang Merah (16.0%) paling bergejolak, sedangkan Minyak Goreng Curah paling stabil (1.3%). Rekomendasi: prioritaskan pemantauan dan stabilisasi pada komoditas dengan volatilitas tertinggi.
+2. Disparitas: CV antarprovinsi tertinggi pada Cabai Rawit Merah (23.0%).
+   Beras Medium: provinsi termahal (Papua) 1.27x provinsi termurah (Jawa Timur). Penyebab selisih ini tidak dapat diuji dengan data panitia, sehingga hanya dilaporkan sebagai temuan deskriptif.
+3. Kurs: korelasi Spearman perubahan kurs vs perubahan harga Beras Medium = -0.01. Tidak cukup untuk menyimpulkan kurs memengaruhi harga.
+4. Google Trends cabai: korelasi dengan harga cabai 0.37 (lag 0) dan 0.24 (lag 1 bulan). Lemah, tidak cukup sebagai alat peringatan dini terbukti.
+5. Akses internet 2023 vs harga beras antarprovinsi: Pearson -0.29, Spearman -0.05. Tidak ada pola konsisten.
+6. Prioritas pemantauan per komoditas (indeks gabungan volatilitas, premi harga terhadap median nasional, dan frekuensi outlier; lihat indeks_prioritas_pemantauan.csv). Peringkat keseluruhan konsisten terhadap variasi bobot (Spearman minimum 0.86), tetapi daftar 5 teratas per komoditas hanya beririsan minimum 22 dari 30 seri. Gunakan sebagai daftar pantau, bukan peringkat pasti.
+7. Perbaikan pelaporan data: 2 seri berkelengkapan < 80% bulan siap analisis (Cabai Rawit Merah - Aceh (14%); Minyak Goreng Curah - Maluku Utara (67%)).
+8. Outlier terbanyak pada 2023-12 (15 seri ditandai); pola serentak ini dilaporkan deskriptif, penyebabnya tidak dianalisis.
+9. QRIS hanya konteks simulasi ekonomi digital; tidak dipakai sebagai dasar kesimpulan.

@@ -1,0 +1,948 @@
+"""
+PRINT 2026 - Subtema Ekonomi
+Data cleaning, validasi, dan EDA harga pangan.
+ 
+Catatan penting dari panitia (dipatuhi di skrip ini):
+- harga_median bersifat provinsi-komoditas-bulan; satuan fisiknya BELUM terverifikasi,
+  jadi level harga tidak dibandingkan antar-komoditas.
+- Kurs & Google Trends nasional bulanan; internet provinsi 2023 (statis).
+- QRIS sintetis & nasional tahunan: tidak dijumlahkan, tidak dipakai untuk klaim kausal.
+"""
+
+import re
+from datetime import datetime
+from pathlib import Path
+ 
+import matplotlib.pyplot as plt
+import pandas as pd
+import numpy as np
+
+file_input = "print_2026_ekonomi.csv"
+file_output = "PRINT_2026_ekonomi_clean.csv"
+folder_output = Path("output_eda")
+folder_output.mkdir(exist_ok=True)
+ 
+kunci = ["bulan", "provinsi", "komoditas"]
+ambang_cakupan = 80      # % hari berharga minimum agar data dianggap layak analisis
+jumlah_provinsi_maks = 38
+min_bulan_seri = 12
+ambang_kelengkapan_seri = 80 
+batas_outlier_bawah = 0.55 
+batas_outlier_atas = 1.8
+
+ 
+format_tanggal = ["%Y-%m", "%Y/%m", "%Y.%m", "%m-%Y", "%d/%m/%Y"]
+tanpa_nilai = {"", "nan", "none", "-", "na", "n/a", "null"}
+ 
+nama_komoditas = {
+    "beras med.": "beras medium",
+    "bwg merah": "bawang merah",
+    "daging ayam": "daging ayam ras",
+    "cabai rawit": "cabai rawit merah",
+    "minyak curah": "minyak goreng curah",
+    "gula pasir": "gula konsumsi",
+}
+ 
+nama_provinsi = {
+    "sumut": "sumatera utara",
+    "jateng": "jawa tengah",
+    "dki jkt": "Dki Jakarta",
+    "d.i. yogyakarta": "DI Yogyakarta",
+    "ntb": "nusa tenggara barat",
+    "ntt": "nusa tenggara timur",
+    "kep. riau": "kepulauan riau",
+    "kep. bangka belitung": "kepulauan bangka belitung",
+}
+
+kapital_singkatan = {
+    "Dki Jakarta" : "DKI Jakarta",
+    "Di Yogyakarta" : "DI Yogyakarta"
+    
+}
+
+kolom_rupiah = [
+    "harga_median", "usd_idr_median"
+]
+kolom_QRIS = [
+    "qris_pengguna_juta",
+    "qris_merchant_juta",
+    "qris_nominal_transaksi_triliun_idr",
+    "qris_volume_transaksi_miliar"
+]
+
+kolom_bulanan = [
+    "usd_idr_median",
+    "tren_beras_median",
+    "tren_cabai_median",
+    "tren_minyak_goreng_median",
+]
+
+kolom_internet = ["internet_laki_laki_2023", "internet_perempuan_2023"]
+
+kolom_lain = [
+    "hari_berharga",
+    "cakupan_persen",
+    "tren_cabai_median",
+    "tren_beras_median",
+    "tren_minyak_goreng_median",
+    
+] + kolom_internet + kolom_QRIS
+
+kolom_angka = kolom_rupiah + kolom_lain
+
+warna = ["#2a78d6", "#eb6834", "#1baf7a","#eda100","#e87ba4","#008300"]
+warna_konteks = "#52514e"
+
+plt.rcParams.update({
+    "axes.spines.top": False,
+    "axes.spines.right": False,
+    "axes.grid": True,
+    "grid.alpha": 0.25,
+    "grid.linewidth": 0.6,
+    "axes.axisbelow": True,
+    "lines.linewidth": 2,
+    "axes.titlesize": 12,
+    "axes.titleweight": "bold",
+    "font.size": 10,
+})
+#======================================================================
+# Fungsi Bantu 
+#======================================================================
+
+def rapikan_teks(seri):
+    return seri.str.strip().str.replace(r"\s+", " ", regex = True).str.lower()
+
+def normalisasi_bulan(nilai):
+    if pd.isna(nilai):
+        return None
+    nilai = str(nilai).strip()
+    for fmt in format_tanggal:
+        try:
+            return datetime.strptime(nilai,fmt).strftime("%Y-%m")
+        except ValueError:
+            continue
+    return None
+
+def ubah_angka(nilai,rupiah =False):
+    
+    if pd.isna(nilai):
+        return float("nan")
+    
+    s = re.sub(r"(?i)rp|%|\s", "", str(nilai))
+    if s.lower() in tanpa_nilai:
+        return float("nan")
+    
+    if "." in s and "," in s:
+        if s.rfind(",") > s.rfind("."):    #1.234,56(format indonesia)
+            
+            s = s.replace(".", "").replace(",", ".")
+            
+        else:
+            
+            s = s.replace(",", "")
+    elif rupiah and re.fullmatch(r"\d{1,3}(\.\d{3})+", s):
+        
+        s = s.replace(".", "")
+        
+    elif rupiah and re.fullmatch(r"\d{1,3}(\,\d{3})+", s):
+        
+        s = s.replace(",","")
+        
+    elif "," in s:
+        s = s.replace(",", ".")
+        
+    return pd.to_numeric(s, errors ="coerce")
+
+def isi_per_grup(data,kolom,grup):
+    
+    jumlah_unik = data.groupby(grup)[kolom].nunique()
+    if(jumlah_unik > 1).any():
+        print(f"Peringatan : {kolom} tidak konsiten di {(jumlah_unik > 1).sum()} grup '{grup}'"
+              "(diisi dengan median grup)")
+    return data[kolom].fillna(data.groupby(grup)[kolom].transform("median"))
+
+def simpan_tabel(tabel,nama, index= True):
+    tabel.to_csv(folder_output / nama, index = index, encoding ="utf-8-sig") 
+
+        
+def simpan_grafik(nama_file):
+    
+    plt.tight_layout()
+    plt.savefig(folder_output / nama_file, dpi = 180)
+    plt.show()
+    plt.close()
+    
+def label_bulan (ax, bulan, langkah=3):
+    ax.set_xticks(range(0,len(bulan),langkah))
+    ax.set_xticklabels(list(bulan[::langkah]), rotation = 45, ha="right")
+        
+def indeks_awal(seri):
+    # ubah seri menjadi sebuah indeks, nilai valid pertama = 100.
+    valid = seri.dropna()
+    return seri / valid.iloc[0] *100 if len(valid) else seri
+
+#====================================================================================
+# Memuat data
+#====================================================================================
+
+
+df = pd.read_csv(file_input, encoding="utf-8-sig", dtype=str)
+
+df.columns = df.columns.str.strip().str.lower()
+
+print("Ukuran data awal:", df.shape)
+df.info()
+print(df.head())
+
+awal = {
+    "baris" : len(df),
+    "variasi_komoditas" : df["komoditas"].nunique(),
+    "variasi_provinsi" : df["provinsi"].nunique(),
+    "format_bulan" : df["bulan"].map(lambda s: re.sub(r"\d","9", str(s).strip())).nunique(),
+    "sel_kosong" : int(df.isna().sum().sum()),
+    "harga_kosong" : int(df["harga_median"].isna().sum()),
+    
+}
+
+df["komoditas"] = rapikan_teks(df["komoditas"]).replace(nama_komoditas).str.title()
+print("\nKomoditas setelah normalisasi")
+print(df["komoditas"].value_counts(dropna= False))
+
+#=======================================================================================================
+# Data Cleaning
+#=======================================================================================================
+
+# ---1.1 Komoditas ---
+
+df["komoditas"] = rapikan_teks(df["komoditas"]).replace(nama_komoditas).str.title()
+print("\nKomoditas setelah normalisasi")
+print(df["komoditas"].value_counts(dropna= False))
+
+# ---1.2 Provinsi ---
+df["provinsi"] = rapikan_teks(df["provinsi"])
+print("\nNama provinsi sebelum pemetaan(cek singkatan yang tercakup):")
+print(sorted(df["provinsi"].dropna().unique()))
+
+df["provinsi"] = (
+    df["provinsi"].replace(nama_provinsi).str.title().replace(kapital_singkatan)
+    
+)
+
+n_provinsi = df["provinsi"].nunique()
+print(f"\nJumlah provinsi unik setelah normalisasi: {n_provinsi}")
+if n_provinsi > jumlah_provinsi_maks:
+    print(f"Peringatan:{n_provinsi} > {jumlah_provinsi_maks}, masih ada variasi nama provinsi")
+    
+# --- 1.3 bulan ---
+
+df["bulan"] = df["bulan"].apply(normalisasi_bulan)
+print("\nBulan gagal diparse:", df["bulan"].isna().sum())
+
+n_sebelum = len(df)
+df = df.dropna(subset=kunci).copy()
+n_kunci_kosong = n_sebelum - len(df)
+print("Baris dibuang karena kunci kosong", n_kunci_kosong)
+df["tahun"] = df["bulan"].str[:4].astype(int)
+
+# --- 1.4 Konversi angka --- 
+
+missing_sebelum = df[kolom_angka].isna().sum()
+
+for kolom in kolom_rupiah:
+    df[kolom] = df[kolom].apply(ubah_angka,rupiah = True)
+for kolom in kolom_lain:
+    df[kolom] = df[kolom].apply(ubah_angka, rupiah = False)
+
+
+tambahan_missing = df[kolom_angka].isna().sum() - missing_sebelum
+print(f"Tambahan missing value akibat konversi angka (idealnya kosong):")
+
+print(tambahan_missing[tambahan_missing != 0])
+
+# --- 1.5 Duplikat (setelah angka konversi) ---
+n_sebelum = len(df)
+df = df.drop_duplicates()
+n_dup_penuh = n_sebelum - len(df)
+print("\nDuplikat penuh dibuang:", n_dup_penuh)
+
+n_dup_kunci = int(df.duplicated(subset=kunci, keep=False).sum())
+print("Baris dengan kunci (provinsi-komoditas-bulan) ganda:", n_dup_kunci)
+n_dup_kunci_dibuang = 0
+if n_dup_kunci > 0:
+    print(df[df.duplicated(subset=kunci, keep=False)].sort_values(kunci).head(10))
+    
+    n_sebelum = len(df)
+    df = (
+        df.sort_values("hari_berharga", ascending=False)
+        .drop_duplicates(subset=kunci, keep="first")
+    )  
+    n_dup_kunci_dibuang = n_sebelum - len(df)
+    print("Duplikat kunci dibuang ( pertahankan hari_berharga terbanyak):", n_dup_kunci_dibuang)
+    
+df = df.sort_values(kunci).reset_index(drop=True)
+    
+# --- 1.6 isi nilai kosong pada variabel bertingkat agregasi lebih tinggi ---
+# nilai ini konstan per bulan (kurs,tren), per provinsi (internet), atau per tahun (QRIS)
+# jadi nilai kosong diisi dari nilai grupnya  sendiri, bukan diestimasi
+    
+for kolom in kolom_bulanan:
+    df[kolom] = isi_per_grup(df,kolom,"bulan")
+for kolom in kolom_internet:
+    df[kolom] = isi_per_grup(df,kolom,"provinsi")
+for kolom in kolom_QRIS:
+    df[kolom] = isi_per_grup(df,kolom,"tahun")
+    
+#--- 1.7 cakupan data harga ---
+    
+jumlah_hari = pd.to_datetime(df["bulan"], format="%Y-%m").dt.days_in_month
+print("\nBaris dengan hari berharga > jumlah hari dalam bulan:", int((df["hari_berharga"] > jumlah_hari ).sum()))
+    
+cakupan_hitung = (df["hari_berharga"] / jumlah_hari * 100).round(1)
+    
+df["cakupan_persen"] = df["cakupan_persen"].fillna(cakupan_hitung)
+    
+#--- 1.8 penanda kualitas ---
+# cakupan kosong (NaN) dianggap rendah supaya tidak lolos ke analisis
+
+df["flag_cakupan_rendah"] = ~(df["cakupan_persen"] >= ambang_cakupan)
+df["siap_analisis"] = (
+    df["harga_median"].notna() 
+    & (df["harga_median"] > 0)
+    & ~df["flag_cakupan_rendah"]
+)
+
+# Outlier : rasio harga terhadap median ser provinsi-komoditas
+# hanya ditandai, tidak dibuang (lonjakan bisa nyata, misalnya saat musiman)
+
+siap = df["siap_analisis"]
+df["rasio_median_seri"] = np.nan
+df.loc[siap, "rasio_median_seri"] = (
+    
+    df.loc[siap, "harga_median"] / df[siap].groupby(["provinsi", "komoditas"])["harga_median"].transform("median")
+    
+)
+
+df["flag_outlier"] = (
+    (df["rasio_median_seri"] < batas_outlier_bawah)
+    | (df["rasio_median_seri"] > batas_outlier_atas)
+    
+)
+
+#==================================================================================
+# 3. Validasi data
+#==================================================================================
+
+print("\n" + "=" *60)
+print("Validasi data")
+print("=" *60)
+
+print("\nMissing value setelah cleaning:")
+print(df.isnull().sum()[df.isnull().sum() > 0])
+
+grid = df["provinsi"].nunique()* df["komoditas"].nunique() * df["bulan"].nunique()
+print(f"\nPanel lengkap? baris= {len(df)}, provinsi x komoditas x bulan {grid}")
+print("Rentang bulan:", df["bulan"].min(), "sampai", df["bulan"].max())
+print("Duplikat kunci tersisa:", int(df.duplicated(subset=kunci, keep=False).sum()))
+print("Harga <=0:", int((df["harga_median"] <= 0).sum()))
+print("Cakupan di luar 0-100%:",
+      int(((df["cakupan_persen"] < 0 ) | (df["cakupan_persen"] > 100)).sum())
+)
+print("\nHarga kosong:")
+print(df.loc[df["harga_median"].isna(),
+             ["bulan", "provinsi", "komoditas", "hari_berharga", "cakupan_persen"]])
+
+# pembenaran ambang cakupan : apakah ada celah alami disekitar ambang batas ? 
+
+
+di_bawah = df.loc[df["cakupan_persen"] < ambang_cakupan, "cakupan_persen"]
+di_atas = df.loc[df["cakupan_persen"] >= ambang_cakupan, "cakupan_persen"]
+print("Sebaran baris cakupan rendah per seri:")
+sebaran_rendah = (
+    df[df["flag_cakupan_rendah"]]
+    .groupby(["provinsi", "komoditas"]).size()
+    .rename("bulan_cakupan_rendah")
+)
+
+print(sebaran_rendah)
+simpan_tabel(sebaran_rendah, "seri_cakupan_rendah.csv")
+
+print("\nOutlier harga ditandai (tidak dibuang):", int(df["flag_outlier"].sum()))
+
+outlier = (
+    df[df["flag_outlier"]]
+    .sort_values("rasio_median_seri")
+    [["bulan", "provinsi", "komoditas", "harga_median", "rasio_median_seri"]]
+    
+)
+print(outlier.round(2).head(10))
+print("...")
+print(outlier.round(2).tail(10))
+simpan_tabel(outlier.round(2), "outlier_harga.csv", index =False) 
+
+# variabel tingkat agregasi lebih tinggi harus konstan di grupnya
+
+print("\nKonsistensi nilai per grup (harus 1)")
+print(" nasional bulanan:", df.groupby("bulan")[kolom_bulanan].nunique().max().max())
+print(" Internet provinsi:", df.groupby("provinsi")[kolom_internet].nunique().max().max())
+print(" QRIS tahunan:", df.groupby("tahun")[kolom_QRIS].nunique().max().max())
+print("\nStatus data QRIS:")
+print(df["qris_status_data"].value_counts())
+
+# ---- Tabel before-after(bukti cleaning) ----
+tabel_bersih = pd.DataFrame({
+    "aspek" : [
+        "jumlah baris",
+        "Variasi penulisan nama komoditas",
+        "Variasi penulisan nama provinsi",
+        "Jumlah format penulisan bulan",
+        "Sel kosong (seluruh kolom)",
+        "Harga kosong (tidak diimputasi)",
+        "Kolom angka bertipe teks",
+    ],
+    "sebelum" :[
+        awal["baris"], awal["variasi_komoditas"], awal["variasi_provinsi"], awal["format_bulan"]
+        ,awal["sel_kosong"], awal["harga_kosong"], len(kolom_angka)
+    ],
+    "sesudah" :[
+        len(df), df["komoditas"].nunique(), df["provinsi"].nunique(),
+        1, int(df.drop(columns = ["rasio_median_seri"]).isna().sum().sum()),
+        int(df["harga_median"].isna().sum()),
+        int(sum(not pd.api.types.is_numeric_dtype(df[k]) for k in kolom_angka)),
+        
+    ],
+    
+})
+
+print("\nTABEL BEFORE-AFTER CLEANING")
+print(tabel_bersih.to_string(index=False))
+print(f"Duplikat penuh dibuang: {n_dup_penuh} | duplikat kunci dibuang: {n_dup_kunci_dibuang} "
+      f"| baris tanpa kunci dibuang: {n_kunci_kosong}")
+simpan_tabel(tabel_bersih, "tabel_before_after_cleaning.csv", index=False)
+ 
+df.to_csv(file_output, index=False, encoding="utf-8-sig")
+print("\nDataset bersih disimpan:", file_output) 
+
+# ============================================================================================
+# --- Pemisahan Tingkat Agregasi --- 
+# Nilainya berulang dan akan menggandakan bobot 
+# =============================================================================================
+
+data_eda = df[df["siap_analisis"]].copy()
+
+# nasional bulanan ( satu nilai per bulan)
+
+data_nasional = df.groupby("bulan")[kolom_bulanan].first().sort_index()
+
+internet = df.groupby("provinsi")[kolom_internet].first()
+internet["internet_total_2023"] = internet[kolom_internet].mean(axis=1)
+internet["selisih_1k_pr_2023"] = (
+    internet["internet_laki_laki_2023"] - internet["internet_perempuan_2023"]
+)
+
+qris = df.groupby("tahun")[kolom_QRIS].first()
+
+tren_harga = (
+    data_eda.groupby(["bulan", "komoditas"])["harga_median"]
+    .median()
+    .unstack()
+    .sort_index()
+)
+
+indeks_harga = tren_harga.apply(indeks_awal, axis = 0)
+
+komoditas_list = sorted(tren_harga.columns)
+warna_komoditas = {k: warna[i % len(warna)] for i, k in enumerate(komoditas_list)}
+
+#==================================================================================
+# --- EDA harga pangan ---
+#================================================================================== 
+ringkasan_harga = data_eda.groupby("komoditas")["harga_median"].agg(
+    ["count", "min", "max", "mean", "median"]
+    
+)
+print("\nRingkasan harga per komoditas (hanya baris siap analisis:)")
+print(ringkasan_harga.round(2))
+simpan_tabel(ringkasan_harga.round(2), "ringkasan_harga_per_komoditas.csv")
+
+kualitas = df.groupby("komoditas")["siap_analisis"].agg(["sum", "count"])
+kualitas["persen_siap"] = (kualitas["sum"] / kualitas["count"] *100).round(1)
+kualitas = kualitas.sort_values("persen_siap", ascending = False)
+print("\nPersentase data siap analisis per komoditas:")
+print(kualitas)
+simpan_tabel(kualitas,"kualitas_data_per_komoditas.csv")
+
+fig, ax = plt.subplots(figsize=(10,5))
+ax.bar(kualitas.index, kualitas["persen_siap"],
+       color=[warna_komoditas[k] for k in kualitas.index])
+ax.set_ylim(90,100.5)
+ax.set_title(f"Persentase Baris siap analisis per komoditas ( cakupan >= {ambang_cakupan}%)")
+ax.set_xlabel("Komoditas")
+ax.set_ylabel("Baris siap analisis (%) [ sumbu mulai 90%]")
+plt.setp(ax.get_xticklabels(), rotation=30, ha="right")
+simpan_grafik("eda1_kualitas_data_komoditas.png")
+
+# --- EDA 2 : tren harga sebagai indeks, satu panel per komoditas --- 
+print("\nIndeks harga per bulan ( awal = 100):")
+print(indeks_harga.round(1).head())
+
+ringkasan_indeks = pd.DataFrame({
+    "indeks_akhir" : indeks_harga.apply(lambda s: s.dropna().iloc[-1]),
+    "indeks_puncak": indeks_harga.max(),
+    "bulan_puncak": indeks_harga.idxmax(),
+    "indeks_terendah": indeks_harga.min(),
+    "bulan_terendah": indeks_harga.idxmin()
+}).round(1)
+print("\nRingkasan indeks per komoditas:")
+print(ringkasan_indeks)
+simpan_tabel(indeks_harga.round(2), "indeks_harga_bulanan.csv")
+simpan_tabel(ringkasan_indeks, "ringkasan_indeks.csv")
+
+fig, axes = plt.subplots(2,3, figsize=(16,8), sharex=True)
+for ax, k in zip(axes.ravel(), komoditas_list):
+    ax.plot(range(len(indeks_harga)), indeks_harga[k].values, color=warna_komoditas[k])
+    ax.axhline(100, color="gray", linestyle="--", linewidth=0.8)
+    ax.set_title(k)
+    ax.set_ylabel("Indeks (bulan pertama = 100)")
+for ax in axes[-1]:
+    label_bulan(ax, indeks_harga.index)
+fig.suptitle("Indeks Median Harga Pangan per Komoditas"
+             "(Satuan harga belum terverifikasi, sehingga dipakai dalam indeks)")
+simpan_grafik("eda2_indeks_harga.png")
+
+# --- EDA 3: volatilitas ( std perubahan persen per bulanan: tidak bergantung satuan) ---
+
+perubahan_harga = tren_harga.pct_change(fill_method=None) *100
+volatilitas = perubahan_harga.std().sort_values(ascending=False)
+print("\nVolatilitas harga per komoditas ( std perubahan bulanan, %):")
+print(volatilitas.round(2))
+simpan_tabel(volatilitas.round(2).rename("Volatilitas_persen"),"volatilitas.csv")
+
+fig, ax = plt.subplots(figsize=(10,5))
+ax.bar(volatilitas.index, volatilitas.values,
+       color=[warna_komoditas[k] for k in volatilitas.index])
+ax.set_title("Volatilitas Harga per Komoditas")
+ax.set_xlabel("Komoditas")
+ax.set_ylabel("Simpangan baku perubahan bulanan(%)")
+plt.setp(ax.get_xticklabels(), rotation=30, ha="right")
+simpan_grafik("eda3_volatilitas.png")
+
+#--- EDA 4: disparitas antarprovinsi ( tanpa satuan: rasio max/min dan CV) ---
+seri = (
+    data_eda.groupby(["komoditas","provinsi"])["harga_median"]
+    .agg(n_bulan="count",median_harga="median")
+    .reset_index()
+)
+tidak_ikut = seri[seri["n_bulan"] < min_bulan_seri]
+print(f"\nSeri dengan < {min_bulan_seri} bulan layak ( tidak ikut perbandingan antarprovinsi): ")
+print(tidak_ikut)
+seri_valid = seri[seri["n_bulan"]>= min_bulan_seri]
+
+disparitas = seri_valid.groupby("komoditas")["median_harga"].agg(
+n_provinsi="count", harga_min="min", harga_max="max", rata2="mean", std="std"
+)
+
+disparitas["rasio_max_min"] = disparitas["harga_max"] / disparitas["harga_min"]
+disparitas["cv_persen"] = disparitas["std"] / disparitas["rata2"] *100
+disparitas = disparitas.sort_values("cv_persen", ascending=False)
+print("\nDisparitas antarprovinsi per komoditas (rasio dan CV tidak bergantung satuan):")
+print(disparitas[["n_provinsi", "rasio_max_min","cv_persen"]].round(2))
+simpan_tabel(disparitas.round(2), "disparitas_antarprovinsi.csv")
+
+fig, axes = plt.subplots(1,2, figsize=(14,5))
+for ax, kolom, judul, sumbu in [
+    (axes[0], "cv_persen", "Koefisien Variasi Antarprovinsi", "CV median harga provinsi(%)"),
+    (axes[1], "rasio_max_min", "Rasio Provinsi Termahal / Termurah", "Rasio(kali)"),
+]:
+    urut = disparitas[kolom].sort_values(ascending=False)
+    ax.bar(urut.index,urut.values, color=[warna_komoditas[k] for k in urut.index])
+    ax.set_title(judul)
+    ax.set_ylabel(sumbu)
+    plt.setp(ax.get_xticklabels(), rotation=30, ha="right")
+simpan_grafik("eda4.1_disparitas_antarprovinsi.png")
+
+# 4.2 Rincian beras medium (level harga boleh dibandingkan karena komoditas sama)
+
+beras_seri = pd.Series(dtype=float)
+if "Beras Medium" in seri_valid["komoditas"].values:
+    beras_seri = (
+        seri_valid[seri_valid["komoditas"] == "Beras Medium"]
+        .set_index("provinsi")["median_harga"]
+        .sort_values(ascending=False)
+    )
+    print("\nMedian harga beras medium per provinsi:")
+    print(beras_seri.round(0))
+    
+    fig, axes = plt.subplots(1,2, figsize=(14,6), sharex=True)
+    warna_b = warna_komoditas["Beras Medium"]
+    beras_seri.head(10).sort_values().plot(kind="barh", ax=axes[0], color=warna_b)
+    axes[0].set_title("10 Provinsi Tertinggi")
+    axes[0].set_xlabel("Median harga(Rp, satuan belum terverifikasi)")
+    axes[0].set_ylabel("")
+    beras_seri.tail(10).sort_values().plot(kind="barh", ax=axes[1], color=warna_b)
+    axes[1].set_title("10 Provinsi Terendah")
+    axes[1].set_xlabel("Median harga(Rp)")
+    axes[1].set_ylabel("")
+    fig.suptitle("Median harga Beras Medium Antarprovinsi (Jan 2023 - Sep 2024)")
+    simpan_grafik("eda4.2_beras_antarprovinsi.png")
+    
+#========================================================================================
+# EDA Variabel pendukung 
+#=========================================================================================
+#---- USD/IDR ----
+kurs = data_nasional["usd_idr_median"]
+perubahan_kurs = kurs.pct_change() * 100 
+korelasi_kurs = pd.DataFrame({
+    "n_bulan": perubahan_harga.apply(
+        lambda s : int((s.notna() & perubahan_kurs.notna()).sum())),
+    "pearson": perubahan_harga.apply(lambda s: s.corr(perubahan_kurs)),
+    "spearman": perubahan_harga.apply(lambda s: s.corr(perubahan_kurs, method="spearman"))
+}).round(2)
+print("\nKorelasi perubahan bulanan kurs vs perubahan bulanan harga")
+print(korelasi_kurs)
+simpan_tabel(korelasi_kurs, "korelasi_kurs_vs_harga.csv")
+
+if "Beras Medium" in indeks_harga.columns:
+    indeks_kurs = indeks_awal(kurs)
+    fig, ax = plt.subplots(figsize=(12,5))
+    x = range(len(indeks_kurs))
+    ax.plot(x, indeks_harga["Beras Medium"], label="Harga Beras Medium")
+    ax.plot(x, indeks_kurs.values, color=warna_konteks, linestyle="--", label="Kurs USD/IDR")
+    ax.axhline(100, color="gray", linestyle=":", linewidth=0.8)
+    label_bulan(ax, indeks_kurs.index)
+    ax.set_title ("Indeks Harga Beras Medium dan Kurs USD/IDR")
+    ax.set_ylabel("Indeks")
+    ax.legend()
+    simpan_grafik("eda5_kurs_vs_beras.png")
+
+#===================================================================================================
+# --- EDA 6: minat pencarian Google Trends (indeks relatif) ---
+
+pasangan_trends={
+      "Beras Medium": "tren_beras_median",
+    "Cabai Rawit Merah": "tren_cabai_median",
+    "Minyak Goreng Curah": "tren_minyak_goreng_median",
+}
+baris = []
+
+for k, kolom in pasangan_trends.items():
+    if k not in tren_harga.columns:
+        continue
+    for lag in (0,1,2):
+        pasangan = pd.concat(
+            [data_nasional[kolom].shift(lag).rename("trends"),tren_harga[k].rename("harga")],
+            axis=1,
+        ).dropna()
+        baris.append({
+            "komoditas": k,
+            "lag_bulan": lag,
+            "n_bulan": len(pasangan),
+            "pearson": pasangan["trends"].corr(pasangan["harga"]),
+            "spearman": pasangan["trends"].corr(pasangan["harga"], method="spearman")
+        })
+        
+korelasi_trends = pd.DataFrame(baris).round(2)
+print("\nKorelasi minat pencarian (lag n sebelumnya) vs Harga Nasional (Deskriptif):")
+print(korelasi_trends.to_string(index=False))
+simpan_tabel(korelasi_trends, "korelasi_trends_vs_harga.csv", index=False)
+
+fig, axes = plt.subplots(1,3, figsize=(17,5), sharex=True)
+for ax,(k,kolom) in zip(axes,pasangan_trends.items()):
+    if k not in indeks_harga.columns:
+        continue
+    idx_tren = indeks_awal(data_nasional[kolom])
+    x = range(len(idx_tren))
+    ax.plot(x, indeks_harga[k].reindex(idx_tren.index).values,
+            color=warna_komoditas[k], label="Harga")
+    ax.plot(x,idx_tren.values,
+            color=warna_konteks, linestyle="--",
+            label ="Minat pencarian(relatif)")          
+    ax.axhline(100, color="gray", linestyle=":", linewidth=0.8)
+    ax.set_title(k)
+    ax.legend(fontsize=8)
+    label_bulan(ax,idx_tren.index)
+axes[0].set_ylabel("Indeks (bulan pertama = 100)")
+fig.suptitle("Harga vs Minat Pencarian Google Trends (indeks relatif, bukan jumlah pencarian)")
+simpan_grafik("eda6_trends_vs_harga.png")
+
+#==================================================================================================
+# EDA 7 --- akses internet 2023 antarprovinsi (data statis) ---
+
+simpan_tabel(internet.round(2), "internet_provinsi_2023.csv")
+
+gabung = internet[["internet_total_2023"]].join(beras_seri.rename("median_harga"), how= "inner")
+gabung = gabung.dropna()
+korelasi_internet_pearson = np.nan
+korelasi_internet_spearman = np.nan
+if len(gabung) > 3:
+    korelasi_internet_pearson = gabung["internet_total_2023"].corr(gabung["median_harga"])
+    korelasi_internet_spearman =  gabung["internet_total_2023"].corr(
+        gabung["median_harga"], method="spearman")
+    print(f"\nAkses Internet 2023 vs median harga Beras Medium antarprovinsi (n = {len(gabung)}):"
+      f"Pearson {korelasi_internet_pearson:.2f}, Spearman{korelasi_internet_spearman:.2f}")
+    fig, ax = plt.subplots(figsize=(9,6))
+    ax.scatter(gabung["internet_total_2023"], gabung["median_harga"], s=50,
+           color=warna_komoditas["Beras Medium"], edgecolor="white", linewidth=1)
+    sorot = set(gabung["median_harga"].nlargest(3).index) | set(
+        gabung["internet_total_2023"].nsmallest(3).index)
+    for nama in sorted(sorot):
+        ax.annotate(nama,(gabung.loc[nama, "internet_total_2023"],
+                          gabung.loc[nama, "median_harga"]),
+                    xytext=(5,5), textcoords="offset points", fontsize=8)
+    ax.set_title("Akses Internet 2023 vs Median Harga Beras Medium (antarprovinsi)")
+    ax.set_xlabel("Pengguna internet 2023, rata-rata laki-laki & perempuan (%)")
+    ax.set_ylabel("Median harga Beras Medium (Rp)")
+    simpan_grafik("eda7a_internet_vs_beras.png")
+    
+selisih = internet["selisih_1k_pr_2023"].sort_values(ascending=False)
+print("\nSelisih akses internet laki-laki & perempuan (poin persentase), 10 Terbesar:")
+print(selisih.head(10).round(2))
+
+fig, ax = plt.subplots(figsize=(9,6))
+selisih.head(10).sort_values().plot(kind="barh", ax=ax, color=warna[0])
+ax.set_title("10 Provinsi dengan selisih Akses Internet Laki-laki - Perempuan (2023)")
+ax.set_xlabel("Selisih (poin persentase)")
+ax.set_ylabel("")
+simpan_grafik("eda7b_selisih_internet_antargender.png")
+#============================================================================================
+# 8. EDA 8 --- Qris (hanya sekadar deskriptif; tanpa penjumlahan / pertumbuhan / tren ----
+#============================================================================================
+
+print("\nQris(sintetis, dua titik tahunan, nasional ) - hanya deskriptif:")
+print(qris)
+print("Tidak dijumlahkan, tidak dihitung pertumbuhan, tidak dipakai sebagai bukti kondisi real")
+print("Angka 2024 = simulasi satu kalender penuh, sedangkan harga berhenti pada September 2024")
+simpan_tabel(qris, "qris_tahunan_deskriptif.csv")
+
+#===================================================================
+# sensitivitas outlier, indeks prioritas pemantauan, dan seri data lemah
+# (semua dihitung hanya berdasarkan data dari panitia)
+#===================================================================
+
+#--- Sensitivitas penanda outlier: sebagai penanda bereapa banyak data yang bergantung hasil pada ambang---
+rasio = df["rasio_median_seri"]
+n_siap = int(df["siap_analisis"].sum())
+baris_sens= []
+for bawah, atas in [(0.5, 2.0), (0.55,1.8),(0.6,1.6),(0.67,1.5)]:
+    n = int(((rasio < bawah) | (rasio > atas)).sum())
+    baris_sens.append({
+        "metode": "rasio terhadap median seri",
+        "parameter": f"<{bawah} atau >{atas}x",
+        "baris_ditandai": n,
+        "persen_data": round(n/n_siap * 100, 2),
+    })
+grup_seri = [data_eda["provinsi"], data_eda["komoditas"]]
+median_seri = data_eda.groupby(grup_seri)["harga_median"].transform("median")
+mad_seri = (
+    (data_eda["harga_median"] - median_seri).abs().groupby(grup_seri).transform("median")
+)
+z_robust = 0.6745 * (data_eda["harga_median"] - median_seri) / mad_seri.replace(0, np.nan)
+n_mad = int((z_robust.abs() > 3.5).sum())
+baris_sens.append({
+    "metode": "MAD robust z-score",
+    "parameter": "|z| > 3.5",
+    "baris ditandai": n_mad,
+    "persen_data": round(n_mad/n_siap *100, 2),
+})
+sensitivitas_outlier = pd.DataFrame(baris_sens)
+print(f"\nSensitivitas penanda outlier (ambang terpilih: < {batas_outlier_bawah} atau "f">{batas_outlier_atas}x):")
+print(sensitivitas_outlier.to_string(index=False))
+simpan_tabel(sensitivitas_outlier, "sensitivitas_outlier.csv", index =False)
+
+outlier_bulan = (
+    df[df["flag_outlier"]].groupby(["bulan", "komoditas"]).size().unstack(fill_value=0)
+)
+print("\nSebaran outlier per bulan dan komoditas ( jumlah provinsi ditandai):")
+print(outlier_bulan)
+simpan_tabel(outlier_bulan, "outlier_per_bulan_komoditas.csv")
+bulan_puncak_outlier, n_outlier_puncak = None, 0
+if not outlier_bulan.empty:
+    bulan_puncak_outlier = outlier_bulan.sum(axis=1).idxmax()
+    n_outlier_puncak = int(outlier_bulan.loc[bulan_puncak_outlier].sum())
+    
+#--- Indeks priotitas pemantauan per seri provinsi-komoditas (tanpa satuan) ---
+# komponen : volatilitas bulanan, premi harga terhadap median nasional ( komoditas & bulan yang sama)
+# tiap komponen diubah ke peringkat persentil di dalam komoditasnya sendiri 
+
+pivot_seri = data_eda.pivot_table(
+    index="bulan", columns=["komoditas", "provinsi"], values="harga_median")
+vol_seri = (pivot_seri.pct_change(fill_method=None) *100).std()
+n_layak = pivot_seri.notna().sum()
+
+median_nasional = data_eda.groupby(["komoditas", "bulan"])["harga_median"].transform("median")
+data_eda["rasio_nasional"] = data_eda["harga_median"] / median_nasional
+premi_harga = (
+    data_eda.groupby(["komoditas", "provinsi"])["rasio_nasional"].median() - 1
+).clip(lower=0)
+
+frekuensi_outlier = df.groupby(["komoditas", "provinsi"])["flag_outlier"].mean()
+kelengkapan = df. groupby(["komoditas", "provinsi"])["siap_analisis"].mean() *100
+
+prioritas = pd.DataFrame({
+    "volatilitas": vol_seri,
+    "premi_harga": premi_harga,
+    "frekuensi_outlier": frekuensi_outlier,
+    "bulan_layak":  n_layak,
+    "kelengkapan_persen": kelengkapan,
+    
+})
+
+komponen = ["volatilitas", "premi_harga", "frekuensi_outlier"]
+layak = prioritas[prioritas["bulan_layak"] >= min_bulan_seri].copy()
+peringkat = layak.groupby(level="komoditas")[komponen].rank(pct=True)
+
+bobot_skenario = {
+    "dasar (sama rata)": (1,1,1),
+    "volatilitas 2x": (2,1,1),
+    "premi harga 2x": (1,2,1),
+    "outlier 2x" : (1,1,2),
+    "tanpa outlier": (1,1,0),
+}
+
+def hitung_indeks(bobot):
+    w = np.array(bobot, dtype=float)
+    return(peringkat * w).sum(axis=1) /w.sum() * 100
+
+def top_5_per_komoditas(indeks):
+    # himpunan yang terdiri dari komoditas dan provinsi, diambil 5 teratas di tiap komoditas
+    hasil = set()
+    for _, sub in indeks.groupby(level="komoditas"):
+        hasil |= set(sub.nlargest(5).index)
+        
+    return hasil
+
+layak["indeks_prioritas"] = hitung_indeks(bobot_skenario["dasar (sama rata)"])
+top_5_dasar = top_5_per_komoditas(layak["indeks_prioritas"])
+baris_ind= []
+for nama, bobot in bobot_skenario.items():
+    idx = hitung_indeks(bobot)
+    baris_ind.append({
+        "skenario": nama,
+        "spearman_vs_dasar": layak["indeks_prioritas"].corr(idx, method="spearman"),
+        "irisan_top_5": len(top_5_dasar & top_5_per_komoditas(idx)),
+        "dari_total": len(top_5_dasar)
+    })
+sensitivitas_indeks = pd.DataFrame(baris_ind).round(2)
+
+top = (
+    layak.reset_index()
+    .sort_values(["komoditas", "indeks_prioritas"], ascending=[True,False])
+)
+
+top5 = top.groupby("komoditas").head(5)
+print("\nIndeks prioritas pemantauan: 5 provinsi teratas per komoditas:")
+print(top5[["komoditas","provinsi"] + komponen + ["indeks_prioritas"]]
+      .round(2).to_string(index=False))
+print("\nIndeks prioritas pemantauan: 5 provinsi teratas per komoditas:")
+print(sensitivitas_indeks.to_string(index=False))
+simpan_tabel(top.round(2), "indeks_prioritas_pemantauan.csv", index=False)
+simpan_tabel(sensitivitas_indeks, "sensitivitas_indeks_prioritas.csv",index= False)
+
+fig, axes = plt.subplots(2,3, figsize=(16,8),sharex=True)
+for ax, k in zip(axes.ravel(), komoditas_list):
+    sub = top5[top5["komoditas"]==k].iloc[::-1]
+    ax.barh(sub["provinsi"], sub["indeks_prioritas"], color=warna_komoditas[k])
+    ax.set_xlim(0,100)
+    ax.set_title(k)
+    
+for ax in axes[-1]:
+    ax.set_xlabel("Indeks prioritas (0-100)")
+fig.suptitle("5 provinsi prioritas pemantauan per komoditas"
+             "(peringkat persentil volatilitas, premi harga, frekuensi outlier)")
+simpan_grafik("eda9_indeks_prioritas.png")
+
+# --- Seri dengan data lemah (prioritas perbaikan pelaporan) ---
+data_lemah = kelengkapan[kelengkapan < ambang_kelengkapan_seri].round(1)
+print(f"\nSeri dengan kelengkapan < {ambang_kelengkapan_seri}% bulan siap analisis:")
+print(data_lemah)
+simpan_tabel(data_lemah.rename("kelengkapan_persen"), "seri_data_lemah.csv")
+teks_lemah = "; ".join(f"{k} - {p} ({v:.0f}%)" for (k, p), v in data_lemah.items())
+ 
+#=============================================================================================
+# Asumsi, keterbatasan, dan landasan rekomendasi (bahan untuk laporan)
+#=============================================================================================
+ 
+n_rendah = int(df["flag_cakupan_rendah"].sum())
+n_outlier = int(df["flag_outlier"].sum())
+asumsi = [
+    "ASUMSI & KETERBATASAN",
+    "1. Satuan harga_median belum diverifikasi panitia. Level harga tidak dibandingkan "
+    "antar-komoditas; perbandingan memakai indeks, % perubahan, rasio, dan CV.",
+    "2. Titik/koma tiga digit pada kolom rupiah dianggap pemisah ribuan; format campuran "
+    "(Rp, %, koma desimal) diseragamkan menjadi numerik.",
+    f"3. Baris dengan cakupan < {ambang_cakupan}% (atau kosong) dikeluarkan dari EDA "
+    f"({n_rendah} baris). Ambang ini pilihan analis; nilai cakupan terlihat terpisah "
+    f"antara {di_bawah.max():.1f}% dan {di_atas.min():.1f}%.",
+    f"4. Harga nasional bulanan = median dari median provinsi (proksi, tanpa bobot populasi). "
+    f"Harga kosong ({int(df['harga_median'].isna().sum())} baris) tidak diimputasi.",
+    f"5. Outlier ({n_outlier} baris di luar {batas_outlier_bawah}x-{batas_outlier_atas}x median "
+    "seri) ditandai, tidak dibuang, karena bisa berupa lonjakan nyata. Jumlah baris yang "
+    f"ditandai sensitif terhadap ambang ({int(sensitivitas_outlier['baris_ditandai'].min())} "
+    f"sampai {int(sensitivitas_outlier['baris_ditandai'].max())} baris pada ambang/metode yang "
+    "diuji); karena baris tidak dibuang, hanya komponen frekuensi outlier pada indeks "
+    "prioritas yang terpengaruh.",
+    f"6. Data mencakup {df['provinsi'].nunique()} provinsi, {df['bulan'].nunique()} bulan "
+    f"({df['bulan'].min()} sampai {df['bulan'].max()}).",
+    "7. Kurs dan Google Trends dianalisis pada tingkat nasional bulanan, bukan per baris. "
+    "Google Trends adalah indeks relatif, bukan jumlah pencarian, dan tidak dibandingkan "
+    "antar-kata kunci.",
+    "8. Akses internet 2023 diperlakukan statis (bukan pengukuran ulang tiap bulan 2024).",
+    "9. QRIS sintetis dan hanya punya dua titik tahunan: tidak dijumlahkan, tidak dipakai "
+    "untuk tren atau klaim kausal; angka 2024 dibaca retrospektif.",
+    "10. Semua hubungan antarvariabel bersifat deskriptif, bukan sebab-akibat; jumlah bulan "
+    f"kecil (sekitar {int(korelasi_kurs['n_bulan'].max())} pasangan) membuat korelasi tidak stabil.",
+    "11. Hanya data panitia yang dipakai. Penyebab pola (lonjakan harga, selisih antarprovinsi) "
+    "tidak dianalisis dan hanya dilaporkan secara deskriptif.",
+    "12. Bobot sama rata pada indeks prioritas adalah pilihan analis; kestabilan peringkat "
+    "diuji dengan variasi bobot (lihat tabel sensitivitas).",
+]
+ 
+kv = korelasi_kurs["spearman"].get("Beras Medium", np.nan)
+cabai_l0 = korelasi_trends[(korelasi_trends["komoditas"] == "Cabai Rawit Merah")
+                           & (korelasi_trends["lag_bulan"] == 0)]["pearson"]
+cabai_l1 = korelasi_trends[(korelasi_trends["komoditas"] == "Cabai Rawit Merah")
+                           & (korelasi_trends["lag_bulan"] == 1)]["pearson"]
+landasan = [
+    "LANDASAN REKOMENDASI (semua bersifat deskriptif)",
+    f"1. Volatilitas: {volatilitas.index[0]} ({volatilitas.iloc[0]:.1f}%) dan "
+    f"{volatilitas.index[1]} ({volatilitas.iloc[1]:.1f}%) paling bergejolak, sedangkan "
+    f"{volatilitas.index[-1]} paling stabil ({volatilitas.iloc[-1]:.1f}%). "
+    "Rekomendasi: prioritaskan pemantauan dan stabilisasi pada komoditas dengan volatilitas tertinggi.",
+    f"2. Disparitas: CV antarprovinsi tertinggi pada {disparitas.index[0]} "
+    f"({disparitas['cv_persen'].iloc[0]:.1f}%).",
+]
+if len(beras_seri) > 1:
+    landasan.append(
+        f"   Beras Medium: provinsi termahal ({beras_seri.index[0]}) "
+        f"{beras_seri.iloc[0] / beras_seri.iloc[-1]:.2f}x provinsi termurah "
+        f"({beras_seri.index[-1]}). Penyebab selisih ini tidak dapat diuji dengan data "
+        "panitia, sehingga hanya dilaporkan sebagai temuan deskriptif."
+    )
+landasan += [
+    f"3. Kurs: korelasi Spearman perubahan kurs vs perubahan harga Beras Medium = {kv:.2f}. "
+    "Tidak cukup untuk menyimpulkan kurs memengaruhi harga.",
+    f"4. Google Trends cabai: korelasi dengan harga cabai {cabai_l0.iloc[0]:.2f} (lag 0) dan "
+    f"{cabai_l1.iloc[0]:.2f} (lag 1 bulan). Lemah, tidak cukup sebagai alat peringatan dini terbukti.",
+    f"5. Akses internet 2023 vs harga beras antarprovinsi: Pearson {korelasi_internet_pearson:.2f}, "
+    f"Spearman {korelasi_internet_spearman:.2f}. Tidak ada pola konsisten.",
+    "6. Prioritas pemantauan per komoditas (indeks gabungan volatilitas, premi harga terhadap "
+    "median nasional, dan frekuensi outlier; lihat indeks_prioritas_pemantauan.csv). "
+    "Peringkat keseluruhan konsisten terhadap variasi bobot (Spearman minimum "
+    f"{sensitivitas_indeks['spearman_vs_dasar'].min():.2f}), tetapi daftar 5 teratas per "
+    f"komoditas hanya beririsan minimum {int(sensitivitas_indeks['irisan_top_5'].min())} dari "
+    f"{int(sensitivitas_indeks['dari_total'].iloc[0])} seri. Gunakan sebagai daftar pantau, "
+    "bukan peringkat pasti.",
+    f"7. Perbaikan pelaporan data: {len(data_lemah)} seri berkelengkapan < "
+    f"{ambang_kelengkapan_seri}% bulan siap analisis ({teks_lemah}).",
+    (f"8. Outlier terbanyak pada {bulan_puncak_outlier} ({n_outlier_puncak} seri ditandai); pola "
+     "serentak ini dilaporkan deskriptif, penyebabnya tidak dianalisis."
+     if bulan_puncak_outlier else "8. Tidak ada outlier yang ditandai."),
+    "9. QRIS hanya konteks simulasi ekonomi digital; tidak dipakai sebagai dasar kesimpulan.",
+]
+ 
+teks = "\n".join(asumsi) + "\n\n" + "\n".join(landasan) + "\n"
+print("\n" + "=" * 60)
+print(teks)
+(folder_output / "asumsi_keterbatasan_landasan_rekomendasi.txt").write_text(
+    teks, encoding="utf-8")
+print("Semua tabel dan grafik tersimpan di folder:", folder_output.resolve())
+ 

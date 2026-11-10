@@ -1,0 +1,6 @@
+﻿metode,parameter,baris_ditandai,persen_data,baris ditandai
+rasio terhadap median seri,<0.5 atau >2.0x,6.0,0.14,
+rasio terhadap median seri,<0.55 atau >1.8x,23.0,0.54,
+rasio terhadap median seri,<0.6 atau >1.6x,64.0,1.5,
+rasio terhadap median seri,<0.67 atau >1.5x,152.0,3.57,
+MAD robust z-score,|z| > 3.5,,1.6,68.0

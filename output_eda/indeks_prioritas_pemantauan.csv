@@ -1,0 +1,204 @@
+﻿komoditas,provinsi,volatilitas,premi_harga,frekuensi_outlier,bulan_layak,kelengkapan_persen,indeks_prioritas
+Bawang Merah,Banten,24.59,0.0,0.05,21,100.0,75.0
+Bawang Merah,Nusa Tenggara Barat,20.7,0.0,0.05,21,100.0,68.14
+Bawang Merah,Gorontalo,22.41,0.05,0.0,21,100.0,67.16
+Bawang Merah,Kepulauan Bangka Belitung,20.56,0.13,0.0,21,100.0,67.16
+Bawang Merah,DKI Jakarta,19.4,0.19,0.0,21,100.0,65.2
+Bawang Merah,DI Yogyakarta,25.24,0.0,0.0,21,100.0,59.31
+Bawang Merah,Kalimantan Selatan,22.58,0.0,0.0,21,100.0,57.35
+Bawang Merah,Kalimantan Timur,16.19,0.09,0.0,21,100.0,57.35
+Bawang Merah,Sulawesi Utara,16.03,0.16,0.0,21,100.0,57.35
+Bawang Merah,Jawa Timur,22.0,0.0,0.0,21,100.0,55.39
+Bawang Merah,Sulawesi Tengah,16.07,0.08,0.0,21,100.0,55.39
+Bawang Merah,Jawa Barat,21.95,0.0,0.0,21,100.0,54.41
+Bawang Merah,Lampung,21.65,0.0,0.0,21,100.0,53.43
+Bawang Merah,Papua,7.83,0.63,0.0,21,100.0,52.45
+Bawang Merah,Sumatera Barat,20.8,0.0,0.0,21,100.0,52.45
+Bawang Merah,Kalimantan Utara,12.94,0.18,0.0,21,100.0,51.47
+Bawang Merah,Maluku,10.23,0.28,0.0,21,100.0,51.47
+Bawang Merah,Maluku Utara,8.77,0.46,0.0,21,100.0,51.47
+Bawang Merah,Jawa Tengah,20.44,0.0,0.0,21,100.0,49.51
+Bawang Merah,Papua Barat,6.56,0.55,0.0,21,100.0,49.51
+Bawang Merah,Sulawesi Barat,20.16,0.0,0.0,21,100.0,48.53
+Bawang Merah,Sulawesi Tenggara,14.49,0.08,0.0,21,100.0,48.53
+Bawang Merah,Kalimantan Tengah,15.3,0.06,0.0,21,100.0,47.55
+Bawang Merah,Sumatera Selatan,19.74,0.0,0.0,21,100.0,47.55
+Bawang Merah,Bali,19.74,0.0,0.0,21,100.0,46.57
+Bawang Merah,Jambi,19.12,0.0,0.0,21,100.0,44.61
+Bawang Merah,Kalimantan Barat,12.1,0.07,0.0,21,100.0,44.61
+Bawang Merah,Bengkulu,18.74,0.0,0.0,21,100.0,43.63
+Bawang Merah,Aceh,16.98,0.0,0.0,21,100.0,42.65
+Bawang Merah,Sulawesi Selatan,15.41,0.0,0.0,21,100.0,38.73
+Bawang Merah,Kepulauan Riau,6.83,0.03,0.0,21,100.0,37.75
+Bawang Merah,Sumatera Utara,15.39,0.0,0.0,21,100.0,37.75
+Bawang Merah,Riau,15.32,0.0,0.0,21,100.0,36.76
+Bawang Merah,Nusa Tenggara Timur,14.25,0.0,0.0,21,100.0,33.82
+Beras Medium,Papua,3.98,0.15,0.0,21,100.0,75.98
+Beras Medium,Gorontalo,5.61,0.0,0.0,21,100.0,69.12
+Beras Medium,Nusa Tenggara Timur,5.07,0.02,0.0,21,100.0,69.12
+Beras Medium,Bali,3.82,0.02,0.0,21,100.0,62.25
+Beras Medium,Sulawesi Utara,3.62,0.03,0.0,21,100.0,62.25
+Beras Medium,Papua Barat,2.71,0.15,0.0,21,100.0,61.27
+Beras Medium,Jawa Barat,5.39,0.0,0.0,21,100.0,58.82
+Beras Medium,Jawa Tengah,4.53,0.0,0.0,21,100.0,56.86
+Beras Medium,Kalimantan Timur,2.46,0.12,0.0,21,100.0,56.37
+Beras Medium,Riau,4.52,0.0,0.0,21,100.0,55.88
+Beras Medium,Nusa Tenggara Barat,4.26,0.0,0.0,21,100.0,54.9
+Beras Medium,Banten,4.06,0.0,0.0,21,100.0,53.92
+Beras Medium,Kepulauan Bangka Belitung,3.01,0.03,0.0,21,100.0,53.43
+Beras Medium,Sumatera Barat,1.79,0.11,0.0,21,100.0,52.45
+Beras Medium,Sulawesi Tengah,3.76,0.0,0.0,21,100.0,50.98
+Beras Medium,Kalimantan Utara,1.48,0.14,0.0,21,100.0,50.49
+Beras Medium,DKI Jakarta,3.76,0.0,0.0,21,100.0,50.0
+Beras Medium,Kalimantan Barat,1.67,0.08,0.0,21,100.0,49.51
+Beras Medium,Maluku Utara,0.9,0.14,0.0,21,100.0,49.51
+Beras Medium,Sulawesi Barat,3.75,0.0,0.0,21,100.0,49.02
+Beras Medium,Kepulauan Riau,2.1,0.03,0.0,21,100.0,48.53
+Beras Medium,Bengkulu,3.73,0.0,0.0,21,100.0,48.04
+Beras Medium,Kalimantan Tengah,1.49,0.05,0.0,21,100.0,46.57
+Beras Medium,Maluku,1.29,0.1,0.0,21,100.0,46.57
+Beras Medium,DI Yogyakarta,3.48,0.0,0.0,21,100.0,46.08
+Beras Medium,Sulawesi Selatan,3.45,0.0,0.0,21,100.0,45.1
+Beras Medium,Sumatera Utara,1.63,0.03,0.0,21,100.0,44.61
+Beras Medium,Lampung,3.42,0.0,0.0,21,100.0,44.12
+Beras Medium,Sulawesi Tenggara,3.37,0.0,0.0,21,100.0,43.14
+Beras Medium,Sumatera Selatan,3.09,0.0,0.0,21,100.0,42.16
+Beras Medium,Jawa Timur,2.94,0.0,0.0,21,100.0,40.2
+Beras Medium,Kalimantan Selatan,2.9,0.0,0.0,21,100.0,39.22
+Beras Medium,Jambi,2.78,0.0,0.0,21,100.0,38.24
+Beras Medium,Aceh,2.35,0.0,0.0,21,100.0,35.29
+Cabai Rawit Merah,Sulawesi Utara,43.32,0.02,0.05,21,100.0,74.75
+Cabai Rawit Merah,Jawa Tengah,36.08,0.0,0.1,21,100.0,68.69
+Cabai Rawit Merah,Maluku Utara,26.89,0.31,0.05,21,100.0,68.69
+Cabai Rawit Merah,Kalimantan Utara,23.44,0.58,0.05,21,100.0,66.67
+Cabai Rawit Merah,Gorontalo,47.83,0.0,0.05,21,100.0,66.16
+Cabai Rawit Merah,Banten,30.51,0.0,0.1,21,100.0,65.66
+Cabai Rawit Merah,DI Yogyakarta,41.48,0.0,0.05,21,100.0,64.14
+Cabai Rawit Merah,DKI Jakarta,27.48,0.14,0.05,21,100.0,63.64
+Cabai Rawit Merah,Jawa Timur,40.66,0.0,0.05,21,100.0,63.13
+Cabai Rawit Merah,Bali,40.38,0.0,0.05,21,100.0,62.12
+Cabai Rawit Merah,Sulawesi Selatan,36.35,0.0,0.05,21,100.0,61.11
+Cabai Rawit Merah,Sulawesi Tengah,36.27,0.0,0.05,21,100.0,60.1
+Cabai Rawit Merah,Nusa Tenggara Barat,34.42,0.0,0.05,21,100.0,58.08
+Cabai Rawit Merah,Sulawesi Barat,31.01,0.0,0.05,21,100.0,57.07
+Cabai Rawit Merah,Jawa Barat,29.02,0.0,0.05,21,100.0,55.05
+Cabai Rawit Merah,Bengkulu,28.32,0.0,0.05,21,100.0,54.04
+Cabai Rawit Merah,Sulawesi Tenggara,28.3,0.0,0.05,21,100.0,53.03
+Cabai Rawit Merah,Kepulauan Bangka Belitung,24.39,0.31,0.0,21,100.0,47.98
+Cabai Rawit Merah,Lampung,25.4,0.0,0.05,21,100.0,46.97
+Cabai Rawit Merah,Maluku,22.1,0.31,0.0,21,100.0,45.96
+Cabai Rawit Merah,Papua,18.88,0.61,0.0,21,100.0,45.96
+Cabai Rawit Merah,Kalimantan Barat,19.95,0.39,0.0,21,100.0,44.95
+Cabai Rawit Merah,Kalimantan Timur,26.5,0.04,0.0,21,100.0,43.94
+Cabai Rawit Merah,Kalimantan Selatan,23.96,0.06,0.0,21,100.0,41.92
+Cabai Rawit Merah,Sumatera Utara,21.31,0.0,0.05,21,100.0,41.92
+Cabai Rawit Merah,Kalimantan Tengah,21.26,0.28,0.0,21,100.0,40.91
+Cabai Rawit Merah,Papua Barat,12.4,0.42,0.0,21,100.0,39.9
+Cabai Rawit Merah,Riau,18.95,0.14,0.0,21,100.0,37.88
+Cabai Rawit Merah,Kepulauan Riau,14.97,0.3,0.0,21,100.0,36.87
+Cabai Rawit Merah,Sumatera Selatan,28.03,0.0,0.0,21,100.0,36.36
+Cabai Rawit Merah,Jambi,27.89,0.0,0.0,21,100.0,35.35
+Cabai Rawit Merah,Nusa Tenggara Timur,14.9,0.02,0.0,21,100.0,29.8
+Cabai Rawit Merah,Sumatera Barat,16.43,0.0,0.0,21,100.0,21.21
+Daging Ayam Ras,Kalimantan Tengah,7.9,0.21,0.0,21,100.0,78.92
+Daging Ayam Ras,Kalimantan Barat,6.77,0.21,0.0,21,100.0,74.02
+Daging Ayam Ras,Kalimantan Utara,4.13,0.36,0.0,21,100.0,67.16
+Daging Ayam Ras,Kalimantan Timur,5.43,0.17,0.0,21,100.0,64.22
+Daging Ayam Ras,Kepulauan Bangka Belitung,6.07,0.01,0.0,21,100.0,62.25
+Daging Ayam Ras,Bengkulu,8.59,0.0,0.0,21,100.0,59.8
+Daging Ayam Ras,Kalimantan Selatan,7.76,0.0,0.0,21,100.0,57.84
+Daging Ayam Ras,Riau,7.64,0.0,0.0,21,100.0,56.86
+Daging Ayam Ras,Jambi,7.4,0.0,0.0,21,100.0,55.88
+Daging Ayam Ras,Nusa Tenggara Barat,3.31,0.17,0.0,21,100.0,55.39
+Daging Ayam Ras,Papua,3.23,0.2,0.0,21,100.0,54.41
+Daging Ayam Ras,Papua Barat,1.94,0.38,0.0,21,100.0,54.41
+Daging Ayam Ras,Sumatera Utara,6.48,0.0,0.0,21,100.0,53.92
+Daging Ayam Ras,Jawa Barat,3.98,0.01,0.0,21,100.0,52.45
+Daging Ayam Ras,Gorontalo,6.03,0.0,0.0,21,100.0,51.96
+Daging Ayam Ras,Bali,3.29,0.1,0.0,21,100.0,51.47
+Daging Ayam Ras,Sumatera Barat,5.8,0.0,0.0,21,100.0,50.98
+Daging Ayam Ras,Sumatera Selatan,5.65,0.0,0.0,21,100.0,50.0
+Daging Ayam Ras,Maluku,1.48,0.36,0.0,21,100.0,49.51
+Daging Ayam Ras,Maluku Utara,1.55,0.31,0.0,21,100.0,49.51
+Daging Ayam Ras,Jawa Timur,4.9,0.0,0.0,21,100.0,48.04
+Daging Ayam Ras,Banten,3.08,0.04,0.0,21,100.0,47.55
+Daging Ayam Ras,Nusa Tenggara Timur,1.72,0.2,0.0,21,100.0,47.55
+Daging Ayam Ras,Sulawesi Selatan,4.74,0.0,0.0,21,100.0,47.06
+Daging Ayam Ras,Aceh,4.73,0.0,0.0,21,100.0,46.08
+Daging Ayam Ras,Kepulauan Riau,2.29,0.15,0.0,21,100.0,45.59
+Daging Ayam Ras,DI Yogyakarta,4.62,0.0,0.0,21,100.0,45.1
+Daging Ayam Ras,DKI Jakarta,2.47,0.06,0.0,21,100.0,44.61
+Daging Ayam Ras,Sulawesi Utara,4.0,0.0,0.0,21,100.0,43.14
+Daging Ayam Ras,Jawa Tengah,3.67,0.0,0.0,21,100.0,41.18
+Daging Ayam Ras,Sulawesi Barat,3.63,0.0,0.0,21,100.0,40.2
+Daging Ayam Ras,Sulawesi Tengah,3.05,0.0,0.0,21,100.0,35.29
+Daging Ayam Ras,Lampung,2.76,0.0,0.0,21,100.0,34.31
+Daging Ayam Ras,Sulawesi Tenggara,2.71,0.0,0.0,21,100.0,33.33
+Gula Konsumsi,Papua,3.6,0.11,0.0,21,100.0,83.82
+Gula Konsumsi,Gorontalo,2.77,0.03,0.0,21,100.0,71.08
+Gula Konsumsi,Sulawesi Utara,2.61,0.03,0.0,21,100.0,69.12
+Gula Konsumsi,Kalimantan Tengah,2.72,0.01,0.0,21,100.0,63.24
+Gula Konsumsi,Nusa Tenggara Timur,2.2,0.04,0.0,21,100.0,63.24
+Gula Konsumsi,Maluku,1.92,0.09,0.0,21,100.0,60.29
+Gula Konsumsi,Papua Barat,1.91,0.11,0.0,21,100.0,60.29
+Gula Konsumsi,Aceh,2.32,0.02,0.0,21,100.0,59.31
+Gula Konsumsi,Nusa Tenggara Barat,2.55,0.0,0.0,21,100.0,59.31
+Gula Konsumsi,DKI Jakarta,3.43,0.0,0.0,21,100.0,58.33
+Gula Konsumsi,Sulawesi Barat,2.04,0.03,0.0,21,100.0,58.33
+Gula Konsumsi,Kalimantan Barat,2.24,0.01,0.0,21,100.0,57.35
+Gula Konsumsi,DI Yogyakarta,3.1,0.0,0.0,21,100.0,57.35
+Gula Konsumsi,Kalimantan Selatan,2.87,0.0,0.0,21,100.0,56.37
+Gula Konsumsi,Kalimantan Timur,2.02,0.03,0.0,21,100.0,55.39
+Gula Konsumsi,Sumatera Selatan,2.78,0.0,0.0,21,100.0,55.39
+Gula Konsumsi,Sulawesi Tengah,1.86,0.04,0.0,21,100.0,54.41
+Gula Konsumsi,Jawa Timur,2.74,0.0,0.0,21,100.0,53.43
+Gula Konsumsi,Sulawesi Tenggara,1.83,0.04,0.0,21,100.0,50.49
+Gula Konsumsi,Banten,2.49,0.0,0.0,21,100.0,49.51
+Gula Konsumsi,Jawa Tengah,2.36,0.0,0.0,21,100.0,48.53
+Gula Konsumsi,Maluku Utara,1.6,0.09,0.0,21,100.0,48.53
+Gula Konsumsi,Kepulauan Bangka Belitung,2.35,0.0,0.0,21,100.0,47.55
+Gula Konsumsi,Lampung,2.21,0.0,0.0,21,100.0,44.61
+Gula Konsumsi,Kalimantan Utara,1.69,0.02,0.0,21,100.0,42.65
+Gula Konsumsi,Sumatera Barat,1.83,0.01,0.0,21,100.0,42.65
+Gula Konsumsi,Kepulauan Riau,2.03,0.0,0.0,21,100.0,41.67
+Gula Konsumsi,Jambi,2.01,0.0,0.0,21,100.0,39.71
+Gula Konsumsi,Bali,1.97,0.0,0.0,21,100.0,38.73
+Gula Konsumsi,Riau,1.9,0.0,0.0,21,100.0,35.78
+Gula Konsumsi,Bengkulu,1.89,0.0,0.0,21,100.0,34.8
+Gula Konsumsi,Sumatera Utara,1.82,0.0,0.0,21,100.0,30.88
+Gula Konsumsi,Sulawesi Selatan,1.81,0.0,0.0,21,100.0,29.9
+Gula Konsumsi,Jawa Barat,1.68,0.0,0.0,21,100.0,27.94
+Minyak Goreng Curah,Maluku Utara,4.99,0.37,0.0,14,66.67,82.84
+Minyak Goreng Curah,Papua Barat,4.8,0.16,0.0,21,100.0,78.92
+Minyak Goreng Curah,Gorontalo,5.68,0.07,0.0,21,100.0,77.94
+Minyak Goreng Curah,Maluku,2.87,0.16,0.0,21,100.0,75.98
+Minyak Goreng Curah,Papua,2.44,0.16,0.0,21,100.0,73.04
+Minyak Goreng Curah,Sulawesi Utara,4.26,0.07,0.0,21,100.0,73.04
+Minyak Goreng Curah,Sulawesi Tenggara,3.29,0.06,0.0,21,100.0,71.08
+Minyak Goreng Curah,Kalimantan Barat,4.54,0.03,0.0,21,100.0,67.16
+Minyak Goreng Curah,Kalimantan Timur,2.21,0.03,0.0,21,100.0,63.24
+Minyak Goreng Curah,Sulawesi Tengah,2.96,0.0,0.0,21,100.0,61.27
+Minyak Goreng Curah,Nusa Tenggara Barat,1.68,0.09,0.0,21,100.0,58.33
+Minyak Goreng Curah,DKI Jakarta,1.75,0.03,0.0,21,100.0,55.39
+Minyak Goreng Curah,Kalimantan Utara,1.67,0.05,0.0,21,100.0,52.45
+Minyak Goreng Curah,Bali,1.69,0.03,0.0,21,100.0,51.47
+Minyak Goreng Curah,DI Yogyakarta,2.7,0.0,0.0,21,100.0,50.49
+Minyak Goreng Curah,Bengkulu,2.17,0.0,0.0,21,100.0,47.55
+Minyak Goreng Curah,Nusa Tenggara Timur,1.09,0.08,0.0,21,100.0,47.55
+Minyak Goreng Curah,Sulawesi Selatan,2.02,0.0,0.0,21,100.0,46.57
+Minyak Goreng Curah,Banten,1.86,0.0,0.0,21,100.0,45.59
+Minyak Goreng Curah,Riau,1.64,0.01,0.0,21,100.0,44.61
+Minyak Goreng Curah,Sumatera Barat,1.84,0.0,0.0,21,100.0,44.61
+Minyak Goreng Curah,Aceh,1.82,0.0,0.0,21,100.0,43.63
+Minyak Goreng Curah,Kepulauan Riau,1.78,0.0,0.0,21,100.0,42.65
+Minyak Goreng Curah,Sulawesi Barat,1.46,0.01,0.0,21,100.0,42.65
+Minyak Goreng Curah,Jambi,1.77,0.0,0.0,21,100.0,41.67
+Minyak Goreng Curah,Jawa Barat,1.28,0.03,0.0,21,100.0,40.69
+Minyak Goreng Curah,Kalimantan Selatan,1.76,0.0,0.0,21,100.0,40.69
+Minyak Goreng Curah,Kepulauan Bangka Belitung,1.71,0.0,0.0,21,100.0,38.73
+Minyak Goreng Curah,Jawa Timur,1.37,0.0,0.0,21,100.0,37.75
+Minyak Goreng Curah,Sumatera Selatan,1.6,0.0,0.0,21,100.0,33.82
+Minyak Goreng Curah,Jawa Tengah,1.52,0.0,0.0,21,100.0,32.84
+Minyak Goreng Curah,Kalimantan Tengah,1.4,0.0,0.0,21,100.0,30.88
+Minyak Goreng Curah,Sumatera Utara,1.36,0.0,0.0,21,100.0,28.92
+Minyak Goreng Curah,Lampung,0.97,0.0,0.0,21,100.0,25.98
